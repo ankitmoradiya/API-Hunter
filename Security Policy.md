@@ -12,7 +12,7 @@ We request that you **DO NOT** open a public GitHub issue for security vulnerabi
 
 Please report security vulnerabilities privately to the maintainer via email:
 
-*   **Email:** `[Your Preferred Security Email Address]` (e.g., `security@ankitmoradiya.com` or a personal email)
+*   **Email:** `ankitmoradiya@hotmail.com`
 *   **Subject:** `[SECURITY] API-Hunter Vulnerability Report`
 
 ### What to Include in the Report
