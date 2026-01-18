@@ -3,16 +3,10 @@
   <p><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p>
 
   <!-- Badges Section: Critical for SEO and trust -->
-  <p>
-    <a href="https://github.com/ankitmoradiya/API-Hunter/releases">
-      <img src="https://img.shields.io/github/go-mod/go-v/ankitmoradiya/API-Hunter?style=for-the-badge&logo=go&logoColor=white&label=Go%20Version" alt="Go Version">
-    </a>
-    <a href="https://github.com/ankitmoradiya/API-Hunter/blob/main/LICENSE">
-      <img src="https://img.shields.io/github/license/ankitmoradiya/API-Hunter?style=for-the-badge&color=blue&logo=github" alt="License">
-    </a>
-    <a href="https://github.com/ankitmoradiya/API-Hunter/issues">
-      <img src="https://img.shields.io/github/issues/ankitmoradiya/API-Hunter?style=for-the-badge&color=red" alt="Issues">
-    </a>
+  <p><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p>   <!-- Fixed Badges Section -->   <p>
+    <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version">
+    <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
+    <img src="https://img.shields.io/badge/Security-Recon-vibrantgreen?style=for-the-badge" alt="Focus">
     <a href="https://github.com/ankitmoradiya/API-Hunter/stargazers">
       <img src="https://img.shields.io/github/stars/ankitmoradiya/API-Hunter?style=for-the-badge&color=yellow&logo=github" alt="GitHub Stars">
     </a>
