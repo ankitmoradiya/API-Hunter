@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://i.imgur.com/your-logo-placeholder.png" alt="API-Hunter Logo" width="150"/>
+  <img src="https://github.com/ankitmoradiya/API-Hunter/blob/main/assets/api_hunter_logo.png" alt="API-Hunter Logo" width="150"/>
   <h1>API-Hunter</h1>
   <p><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p>
 
