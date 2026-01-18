@@ -1,9 +1,9 @@
 <div align="center">
   <img src="https://github.com/ankitmoradiya/API-Hunter/blob/main/assets/api_hunter_logo1.png" alt="API-Hunter Logo" width="250"/>
-  <p><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p>
+
 
   <!-- Badges Section: Critical for SEO and trust -->
-  <p><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p>   <!-- Fixed Badges Section -->   <p>
+  <p1><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p1>   <!-- Fixed Badges Section -->   <p>
     <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version">
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
     <img src="https://img.shields.io/badge/Security-Recon-vibrantgreen?style=for-the-badge" alt="Focus">
