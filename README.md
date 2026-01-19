@@ -43,10 +43,11 @@ git clone https://github.com/ankitmoradiya/API-Hunter.git
 cd API-Hunter
 
 # Build the binary
-go build -o apihunter ./cmd/apihunter
+go build -o apihunter.exe ./cmd/apihunter (For Windows)
+go build -o apihunter ./cmd/apihunter (For Linux)
 
 # Run the tool
-./apihunter --help
+./apihunter.exe --help
 ```
 
 ### Binary (Recommended)
@@ -59,14 +60,14 @@ Download the latest pre-compiled binary for your operating system from the [**Re
 
 ```bash
 # Simple scan of a target API
-./apihunter scan -u https://api.example.com
+./apihunter.exe scan -u https://api.example.com
 ```
 
 ### Authenticated Scan (Form Login)
 
 ```bash
 # Scan a target that requires login
-./apihunter scan -u https://app.example.com \
+./apihunter.exe scan -u https://app.example.com \
   --login-url https://app.example.com/login \
   -U admin \
   -P password123
