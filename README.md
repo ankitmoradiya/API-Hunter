@@ -4,7 +4,7 @@
 
   <!-- Badges Section: Critical for SEO and trust -->
   <p1><strong>A powerful API reconnaissance and documentation tool for security testing.</strong></p1>   <!-- Fixed Badges Section -->   <p>
-    <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version">
+    <img src="https://img.shields.io/badge/Go-1.24+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go Version">
     <img src="https://img.shields.io/badge/License-MIT-blue?style=for-the-badge" alt="License">
     <img src="https://img.shields.io/badge/Security-Recon-vibrantgreen?style=for-the-badge" alt="Focus">
     <a href="https://github.com/ankitmoradiya/API-Hunter/stargazers">
@@ -25,15 +25,16 @@ It goes beyond simple crawling by leveraging multiple passive and active reconna
 
 | Feature | Description | Benefit for Security Testing |
 | :--- | :--- | :--- |
-| 🔍 **Multi-Source Recon** | Discovers endpoints from **Wayback Machine**, **CommonCrawl**, sitemaps, `robots.txt`, and by parsing **JavaScript** files. | Finds hidden, deprecated, or forgotten endpoints that may contain vulnerabilities. |
-| 🛡️ **Smart Analysis & Tagging** | Infers HTTP methods, detects path parameters, and tags endpoints with security risk levels (Critical, High, Medium, Low). | Prioritizes testing efforts on the most sensitive and high-risk endpoints. |
+| 🔍 **Multi-Source Recon** | Discovers endpoints from **Wayback Machine**, **CommonCrawl**, sitemaps, HTML crawling, and by parsing **JavaScript** files. | Finds hidden, deprecated, or forgotten endpoints that may contain vulnerabilities. |
+| 🧩 **SPA / Bundle Parsing** | Deep-parses JavaScript bundles from single-page apps (Angular/React/Vue) where calls are built by concatenating a base URL (e.g. `apiUrl+"Controller/Action"`), and auto-discovers the API host even when it differs from the site. | Recovers the real API surface of modern SPAs that literal-only scanners miss entirely. |
+| 🛡️ **Smart Analysis & Tagging** | Infers HTTP methods (including PascalCase action verbs like `Get`/`Create`/`Update`/`Delete`), detects path parameters, and tags endpoints with security risk levels (Critical, High, Medium, Low). | Prioritizes testing efforts on the most sensitive and high-risk endpoints. |
 | 🔑 **Automatic Authentication** | Supports **Form Login**, **JSON API Login**, and **HTTP Basic Auth** to scan authenticated areas. | Allows comprehensive scanning of private or logged-in sections of an application. |
 | 📄 **Auto-Documentation** | Generates industry-standard **OpenAPI 3.0 (Swagger)** and **Postman Collection** files. | Streamlines the documentation and import process into other testing tools like Burp Suite or Postman. |
 | ⚙️ **Rate Limiting** | Configurable rate limiting with adaptive backoff to avoid detection and server overload. | Ensures a stealthy and reliable scan without causing service disruption. |
 
 ## 🚀 Installation
 
-API-Hunter requires **Go 1.20 or later**.
+API-Hunter requires **Go 1.24 or later**.
 
 ### From Source
 
@@ -81,8 +82,26 @@ The tool saves all results to a specified output directory (default: `./apihunte
 | :--- | :--- | :--- |
 | `openapi.yaml` | OpenAPI 3.0 | Importable into Swagger UI, Insomnia, etc. |
 | `postman_collection.json` | Postman Collection v2.1 | Ready-to-use collection for Postman. |
-| `urls.txt` | Plain Text | All discovered URLs. |
 | `report.md` | Markdown | Human-readable report with risk categorization. |
+| `results.json` | JSON | Full machine-readable results (endpoints, methods, risk, source, per-module stats). |
+| `urls_all.txt` | Plain Text | All discovered endpoint URLs. |
+| `urls_critical.txt` / `urls_high.txt` | Plain Text | URLs filtered by risk level (written when non-empty). |
+| `urls_api.txt` / `urls_js.txt` | Plain Text | API endpoints and discovered JavaScript files. |
+
+## 🔓 Access-Control Probe (`tools/authprobe`)
+
+After a scan, verify whether the discovered endpoints actually **enforce authentication**. `authprobe` reads a scan's `results.json` and re-requests each endpoint **with no session** (no `Authorization` header, no cookies), reporting which are protected (`401/403` or a redirect to sign-in) and which respond without auth.
+
+It is **read-safe by design**: it probes with `GET`/`OPTIONS` only and never invokes a write handler, so it cannot create, modify, or delete data.
+
+```bash
+# Run a scan first, then probe its results
+go run ./tools/authprobe -in apihunter_output/results.json -out apihunter_output/authtest
+```
+
+Output: `authtest_report.md` (endpoints ranked exposed → protected, with risk level) and `authtest_results.json`. A `GET` cannot confirm the auth posture of a write-only (`POST`/`PUT`/`DELETE`) route — those are reported as `METHOD-NOT-ALLOWED` and require a method-accurate follow-up.
+
+> ⚠️ Only run `authprobe` against systems you are authorized to test.
 
 ## 🤝 Contributing
 
