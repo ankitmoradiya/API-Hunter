@@ -3,6 +3,7 @@ package recon
 
 import (
 	"context"
+	"strings"
 	"sync"
 	"time"
 
@@ -65,6 +66,7 @@ func (o *Orchestrator) Run(ctx context.Context, target string) (*models.ScanResu
 	}
 
 	var allURLs []string
+	urlSource := make(map[string]string) // first module that reported a URL
 	var mu sync.Mutex
 	var wg sync.WaitGroup
 
@@ -86,7 +88,12 @@ func (o *Orchestrator) Run(ctx context.Context, target string) (*models.ScanResu
 
 			mu.Lock()
 			result.ModuleStats[m.Name()] = stat
-			allURLs = append(allURLs, urls...)
+			for _, u := range urls {
+				if _, ok := urlSource[u]; !ok {
+					urlSource[u] = m.Name()
+					allURLs = append(allURLs, u)
+				}
+			}
 			mu.Unlock()
 		}(mod)
 	}
@@ -94,14 +101,28 @@ func (o *Orchestrator) Run(ctx context.Context, target string) (*models.ScanResu
 	wg.Wait()
 	result.EndTime = time.Now()
 
-	// Deduplicate URLs
-	seen := make(map[string]bool)
+	// Split discovered URLs into real endpoints vs. static asset files.
+	// Assets (JS/CSS/images/...) are kept for reference but are not endpoints;
+	// .js files are recorded separately since they are the parser's input.
 	for _, u := range allURLs {
-		if !seen[u] {
-			seen[u] = true
-			result.Endpoints = append(result.Endpoints, models.Endpoint{URL: u})
+		if assetExtRe.MatchString(u) {
+			if strings.HasSuffix(strings.ToLower(stripQuery(u)), ".js") {
+				result.JSFiles = append(result.JSFiles, u)
+			}
+			continue
 		}
+		result.Endpoints = append(result.Endpoints, models.Endpoint{
+			URL:    u,
+			Source: urlSource[u],
+		})
 	}
 
 	return result, nil
+}
+
+func stripQuery(u string) string {
+	if i := strings.IndexByte(u, '?'); i >= 0 {
+		return u[:i]
+	}
+	return u
 }

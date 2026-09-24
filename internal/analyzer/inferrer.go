@@ -36,6 +36,13 @@ var methodPatterns = []struct {
 	{regexp.MustCompile(`/verify|/confirm`), []string{"POST", "GET"}},
 	{regexp.MustCompile(`/reset`), []string{"POST"}},
 	{regexp.MustCompile(`/callback|/webhook`), []string{"POST"}},
+
+	// PascalCase / verb-suffixed actions common in .NET & Java APIs
+	// (matched on the lowercased path, no leading slash required).
+	{regexp.MustCompile(`(?:^|/)(get|fetch|list|all|by[a-z]|view|report|download|export)`), []string{"GET"}},
+	{regexp.MustCompile(`(?:^|/)(save|add|insert|new|submit|bulk)`), []string{"POST"}},
+	{regexp.MustCompile(`(?:^|/)(edit|modify|change)`), []string{"PUT", "PATCH"}},
+	{regexp.MustCompile(`(?:^|/)(remove|del)`), []string{"DELETE", "POST"}},
 }
 
 // InferMethods adds inferred HTTP methods to endpoints

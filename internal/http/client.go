@@ -24,9 +24,10 @@ type Client struct {
 func NewClient(rateLimit int, timeout time.Duration) *Client {
 	c := &Client{
 		client: &fasthttp.Client{
-			ReadTimeout:     timeout,
-			WriteTimeout:    timeout,
-			MaxConnsPerHost: 100,
+			ReadTimeout:         timeout,
+			WriteTimeout:        timeout,
+			MaxConnsPerHost:     100,
+			MaxResponseBodySize: 50 << 20, // 50 MB — SPA bundles exceed fasthttp's 4 MB default
 		},
 		rateLimit:    rateLimit,
 		tokens:       make(chan struct{}, rateLimit),
