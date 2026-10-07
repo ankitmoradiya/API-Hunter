@@ -57,8 +57,12 @@ func init() {
 	scanCmd.Flags().DurationVar(&cfg.RateLimit.Delay, "delay", 0, "Delay between requests")
 	scanCmd.Flags().BoolVar(&cfg.RateLimit.Adaptive, "adaptive", true, "Adaptive rate limiting")
 
+	// Post-scan analysis
+	scanCmd.Flags().BoolVar(&cfg.AuthCheck, "auth-check", true, "Probe discovered endpoints for missing authentication (read-safe, unauthenticated GET)")
+	scanCmd.Flags().BoolVar(&cfg.Secrets, "scan-secrets", true, "Scan discovered JavaScript (and target page) for leaked secrets")
+
 	// Output
-	scanCmd.Flags().StringVarP(&cfg.OutputDir, "output", "o", "./apihunter_output", "Output directory")
+	scanCmd.Flags().StringVarP(&cfg.OutputDir, "output", "o", "./apihunter_output", "Base output directory; each scan creates a timestamped <host>_<date>_<time> folder inside it")
 	scanCmd.Flags().StringSliceVarP(&cfg.Formats, "format", "f", []string{"openapi", "postman", "urls", "report"}, "Output formats")
 	scanCmd.Flags().BoolVarP(&cfg.Verbose, "verbose", "v", false, "Verbose output")
 	scanCmd.Flags().BoolVarP(&cfg.Quiet, "quiet", "q", false, "Minimal output")

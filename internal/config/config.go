@@ -4,7 +4,8 @@ import "time"
 
 type Config struct {
 	Target     string
-	OutputDir  string
+	OutputDir  string // base directory; each scan creates a timestamped run folder inside it
+	RunDir     string // resolved per-scan folder (<host>_<date>_<time>); set at scan start
 	Formats    []string
 	Auth       AuthConfig
 	RateLimit  RateLimitConfig
@@ -13,6 +14,8 @@ type Config struct {
 	Timeout    time.Duration
 	Verbose    bool
 	Quiet      bool
+	AuthCheck  bool // probe discovered endpoints for missing authentication
+	Secrets    bool // scan discovered JavaScript (and target page) for leaked secrets
 }
 
 type AuthConfig struct {
@@ -53,6 +56,8 @@ func DefaultConfig() *Config {
 		Formats:    []string{"openapi", "postman", "urls", "report"},
 		CrawlDepth: 3,
 		Timeout:    30 * time.Second,
+		AuthCheck:  true,
+		Secrets:    true,
 		RateLimit: RateLimitConfig{
 			RequestsPerSecond: 10,
 			Threads:           5,

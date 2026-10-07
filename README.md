@@ -29,6 +29,8 @@ It goes beyond simple crawling by leveraging multiple passive and active reconna
 | 🧩 **SPA / Bundle Parsing** | Deep-parses JavaScript bundles from single-page apps (Angular/React/Vue) where calls are built by concatenating a base URL (e.g. `apiUrl+"Controller/Action"`), and auto-discovers the API host even when it differs from the site. | Recovers the real API surface of modern SPAs that literal-only scanners miss entirely. |
 | 🛡️ **Smart Analysis & Tagging** | Infers HTTP methods (including PascalCase action verbs like `Get`/`Create`/`Update`/`Delete`), detects path parameters, and tags endpoints with security risk levels (Critical, High, Medium, Low). | Prioritizes testing efforts on the most sensitive and high-risk endpoints. |
 | 🔑 **Automatic Authentication** | Supports **Form Login**, **JSON API Login**, and **HTTP Basic Auth** to scan authenticated areas. | Allows comprehensive scanning of private or logged-in sections of an application. |
+| 🚦 **Access-Control Check** | After discovery, re-requests every endpoint **with no session** (read-safe, `GET` only) and reports which respond **without authentication**. | Surfaces broken access control / missing auth gates automatically, no separate step. |
+| 🕵️ **Secret Scanning** | Scans discovered **JavaScript bundles** (and the target page) for leaked **API keys, tokens, private keys, JWTs, and DB connection strings**. | Flags credentials exposed in public JS that could impact the organization if disclosed. |
 | 📄 **Auto-Documentation** | Generates industry-standard **OpenAPI 3.0 (Swagger)** and **Postman Collection** files. | Streamlines the documentation and import process into other testing tools like Burp Suite or Postman. |
 | ⚙️ **Rate Limiting** | Configurable rate limiting with adaptive backoff to avoid detection and server overload. | Ensures a stealthy and reliable scan without causing service disruption. |
 
@@ -76,7 +78,18 @@ Download the latest pre-compiled binary for your operating system from the [**Re
 
 ### Output Formats
 
-The tool saves all results to a specified output directory (default: `./apihunter_output`).
+Each scan writes to its **own timestamped folder** so previous results are never overwritten. The `-o/--output` value is treated as a **base directory** (default: `./apihunter_output`); inside it, every run creates a folder named `<host>_<DD-Mon-YYYY>_<HH-MMAM/PM>`, e.g.:
+
+```
+apihunter_output/
+└── xyz.abc.com_23-Mar-2026_11-30PM/
+    ├── openapi.yaml
+    ├── report.md
+    ├── authtest_report.md
+    └── secrets_report.md
+```
+
+> Note: a colon (`:`) is illegal in Windows paths, so the time uses a hyphen (`11-30PM`). Two scans of the same host in the same minute get a `_2`, `_3`, … suffix.
 
 | File Name | Format | Description |
 | :--- | :--- | :--- |
@@ -87,8 +100,19 @@ The tool saves all results to a specified output directory (default: `./apihunte
 | `urls_all.txt` | Plain Text | All discovered endpoint URLs. |
 | `urls_critical.txt` / `urls_high.txt` | Plain Text | URLs filtered by risk level (written when non-empty). |
 | `urls_api.txt` / `urls_js.txt` | Plain Text | API endpoints and discovered JavaScript files. |
+| `authtest_report.md` / `authtest_results.json` | Markdown / JSON | Access-control check: endpoints reachable without authentication (see below). |
+| `secrets_report.md` / `secrets_results.json` | Markdown / JSON | Secrets detected in discovered JavaScript (see below). |
+
+### Access-control & secret scanning
+
+Both run **automatically** after each scan and write into the run folder:
+
+- **`--auth-check`** (default **on**): read-safe unauthenticated `GET` probe of every discovered endpoint, classifying each as `EXPOSED (2xx)`, `PROTECTED`, `REACHED (4xx noauth)`, etc. Disable with `--auth-check=false`.
+- **`--scan-secrets`** (default **on**): fetches discovered JS bundles and the target page and matches a battery of patterns (AWS/Google/Stripe/Slack/GitHub keys, JWTs, private keys, DB connection strings, and generic high-entropy secret assignments), filtering obvious placeholders. Disable with `--scan-secrets=false`. Full secret values are written to the report, so **treat `secrets_report.md` as sensitive**.
 
 ## 🔓 Access-Control Probe (`tools/authprobe`)
+
+> This check now runs **automatically** during `scan` (see `--auth-check` above). The standalone `authprobe` tool remains available for re-running the probe against an existing `results.json` without re-scanning.
 
 After a scan, verify whether the discovered endpoints actually **enforce authentication**. `authprobe` reads a scan's `results.json` and re-requests each endpoint **with no session** (no `Authorization` header, no cookies), reporting which are protected (`401/403` or a redirect to sign-in) and which respond without auth.
 

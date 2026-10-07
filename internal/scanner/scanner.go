@@ -4,15 +4,20 @@ package scanner
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/apihunter/apihunter/internal/analyzer"
 	"github.com/apihunter/apihunter/internal/auth"
+	"github.com/apihunter/apihunter/internal/authcheck"
 	"github.com/apihunter/apihunter/internal/config"
 	"github.com/apihunter/apihunter/internal/export"
 	httpclient "github.com/apihunter/apihunter/internal/http"
 	"github.com/apihunter/apihunter/internal/models"
 	"github.com/apihunter/apihunter/internal/recon"
+	"github.com/apihunter/apihunter/internal/secrets"
 )
 
 // Scanner orchestrates the entire scanning process
@@ -90,16 +95,63 @@ func (s *Scanner) Run(ctx context.Context) error {
 	groups := grouper.GroupEndpoints(result.Endpoints)
 	fmt.Printf("    Grouped into %d resource categories\n", len(groups))
 
+	// Resolve the per-scan run folder (base output dir + <host>_<date>_<time>)
+	// so each scan is preserved instead of overwriting previous results.
+	s.config.RunDir = uniqueDir(filepath.Join(s.config.OutputDir, config.RunFolderName(s.config.Target, time.Now())))
+	s.config.OutputDir = s.config.RunDir
+
 	// Phase 4: Export
 	fmt.Println("\n[4/4] Generating output files...")
 	if err := s.exportResults(result, groups); err != nil {
 		return fmt.Errorf("export failed: %w", err)
 	}
 
+	// Post-scan phase: unauthenticated access-control check.
+	if s.config.AuthCheck {
+		s.runAuthCheck(result)
+	}
+
+	// Post-scan phase: secret scan of discovered JavaScript.
+	if s.config.Secrets {
+		s.runSecretScan(result)
+	}
+
 	// Summary
 	s.printSummary(result)
 
 	return nil
+}
+
+// runAuthCheck re-requests every discovered endpoint with no session to find
+// routes that are reachable without authentication (read-safe, GET only).
+func (s *Scanner) runAuthCheck(result *models.ScanResult) {
+	fmt.Println("\n[+] Access-control check (unauthenticated GET probe)...")
+	if len(result.Endpoints) == 0 {
+		fmt.Println("    No endpoints to probe.")
+		return
+	}
+	sum, err := authcheck.Run(result, s.config.OutputDir, s.config.RateLimit.RequestsPerSecond, s.config.RateLimit.Threads)
+	if err != nil {
+		fmt.Printf("    [WARN] auth check failed: %v\n", err)
+		return
+	}
+	fmt.Printf("    Probed %d endpoints — %d reachable without auth\n", sum.Total, sum.Exposed)
+	fmt.Printf("    Generated authtest_report.md and authtest_results.json\n")
+}
+
+// runSecretScan fetches discovered JS bundles (and the target page) and reports
+// any leaked credentials.
+func (s *Scanner) runSecretScan(result *models.ScanResult) {
+	fmt.Println("\n[+] Secret scan (JavaScript)...")
+	sources := append([]string{s.config.Target}, result.JSFiles...)
+	sum, err := secrets.Scan(s.client, sources, s.config.OutputDir, s.config.RateLimit.Threads)
+	if err != nil {
+		fmt.Printf("    [WARN] secret scan failed: %v\n", err)
+		return
+	}
+	fmt.Printf("    Scanned %d files — %d secrets (%d critical, %d high, %d medium)\n",
+		sum.FilesScanned, sum.Total, sum.Critical, sum.High, sum.Medium)
+	fmt.Printf("    Generated secrets_report.md and secrets_results.json\n")
 }
 
 func (s *Scanner) exportResults(result *models.ScanResult, groups []analyzer.EndpointGroup) error {
@@ -141,6 +193,20 @@ func (s *Scanner) printSummary(result *models.ScanResult) {
 		result.Statistics.MediumCount,
 		result.Statistics.LowCount)
 	fmt.Printf("\n  Output saved to: %s\n\n", s.config.OutputDir)
+}
+
+// uniqueDir returns base if it does not exist yet, otherwise base_2, base_3, …
+// so that two scans of the same host within the same minute never overwrite.
+func uniqueDir(base string) string {
+	if _, err := os.Stat(base); os.IsNotExist(err) {
+		return base
+	}
+	for i := 2; ; i++ {
+		cand := fmt.Sprintf("%s_%d", base, i)
+		if _, err := os.Stat(cand); os.IsNotExist(err) {
+			return cand
+		}
+	}
 }
 
 func splitHeader(h string) []string {
