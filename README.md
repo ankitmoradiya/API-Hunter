@@ -76,6 +76,49 @@ Download the latest pre-compiled binary for your operating system from the [**Re
   -P password123
 ```
 
+### Full Scan with Access-Control & Secret Checks
+
+The access-control check and JavaScript secret scan run **automatically** — the basic command already triggers them:
+
+```bash
+./apihunter.exe scan -u https://xyz.abc.com -o ./apihunter_output
+```
+
+```text
+[1/4] Running reconnaissance modules...
+    [OK] crawler: 42 URLs (0.31s)
+    [OK] jsparser: 18 URLs (1.20s)
+    [OK] sitemap: 7 URLs (0.90s)
+
+[2/4] Normalizing endpoints...
+    Normalized to 55 unique endpoints
+
+[3/4] Analyzing endpoints...
+    Grouped into 12 resource categories
+
+[4/4] Generating output files...
+    Generated openapi.yaml
+    Generated postman_collection.json
+    Generated URL lists
+    Generated report.md and results.json
+
+[+] Access-control check (unauthenticated GET probe)...
+    Probed 55 endpoints — 4 reachable without auth
+    Generated authtest_report.md and authtest_results.json
+
+[+] Secret scan (JavaScript)...
+    Scanned 18 files — 3 secrets (2 critical, 1 high, 0 medium)
+    Generated secrets_report.md and secrets_results.json
+
+  Output saved to: apihunter_output/xyz.abc.com_23-Mar-2026_11-30PM
+```
+
+To skip either phase (e.g. for a purely passive run):
+
+```bash
+./apihunter.exe scan -u https://xyz.abc.com --auth-check=false --scan-secrets=false
+```
+
 ### Output Formats
 
 Each scan writes to its **own timestamped folder** so previous results are never overwritten. The `-o/--output` value is treated as a **base directory** (default: `./apihunter_output`); inside it, every run creates a folder named `<host>_<DD-Mon-YYYY>_<HH-MMAM/PM>`, e.g.:
